@@ -1,26 +1,22 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import DrawPanel from "./DrawPanel/DrawPanel";
+import PlanEventType from "./enum/event-type.enum";
+import MeasurementUnit from "./enum/measurement-unit.enum";
+import "./App.css";
+import DrawToolbar from "./components/components-ui/DrawToolbar/DrawToolbar";
 
-function App() {
+const App: React.FC = () => {
+  const [mode, setMode] = useState(PlanEventType.CREATE_LINE);
+  const [unit, setUnit] = useState<MeasurementUnit>(MeasurementUnit.METRIC);
+
+  const handleSelectMode = (mode: PlanEventType) => setMode(mode);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <DrawToolbar selectedMode={mode} onSelectMode={handleSelectMode} />
+      <DrawPanel mode={mode} unit={unit} />
     </div>
   );
-}
+};
 
 export default App;

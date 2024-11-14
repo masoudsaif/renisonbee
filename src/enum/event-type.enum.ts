@@ -1,0 +1,9 @@
+enum EventType {
+  CREATE = "CREATE",
+  CREATE_LINE = "CREATE_LINE",
+  CREATE_RECTANGLE = "CREATE_RECTANGLE",
+  CREATE_CIRCLE = "CREATE_CIRCLE",
+  SELECT = "SELECT",
+}
+
+export default EventType;

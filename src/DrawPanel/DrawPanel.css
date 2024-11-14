@@ -1,0 +1,21 @@
+.grid {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-size: var(--grid-size) var(--grid-size);
+  background-color: var(--grid-bg-color);
+  background-image: linear-gradient(
+      to right,
+      var(--grid-line-color) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
+}
+
+.draw-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
