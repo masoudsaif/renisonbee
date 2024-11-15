@@ -1,7 +1,7 @@
 import IPosition from "../interfaces/position.interface";
 import IShape from "../interfaces/shape.interface";
 
-export const isAtTheSameCoordinate = (shape: IShape) =>
+export const isAtTheSamePosition = (shape: IShape) =>
   shape.startX === shape.endX && shape.startY === shape.endY;
 
 export const getAxesCenter = (): IPosition => {

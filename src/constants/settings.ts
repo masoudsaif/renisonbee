@@ -5,4 +5,4 @@ export const GRID_SIZE = parseInt(
 
 export const SNAP_THRESHOLD = 5;
 
-export const SNAP_THRESHOLD_PRIORTIZE = 10;
+export const ANGLE_SNAP_THRESHOLD = 3;

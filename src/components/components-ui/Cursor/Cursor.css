@@ -1,37 +1,14 @@
-.cursor-container {
+/* CustomCursor.css */
+.cursor {
   position: fixed;
-  width: 1px;
-  height: 1px;
-  background-color: transparent;
-  pointer-events: none;
-  z-index: var(--cursor-index);
-}
-
-.crosshair {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--cursor-size);
-  height: var(--cursor-size);
-  background-color: transparent;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.crosshair .vertical-line {
-  position: absolute;
   top: 0;
-  left: 50%;
-  width: 1px;
-  height: 100%;
-  background-color: var(--cursor-color);
-}
-
-.crosshair .horizontal-line {
-  position: absolute;
-  top: 50%;
   left: 0;
-  width: 100%;
-  height: 1px;
-  background-color: var(--cursor-color);
+  width: 1;
+  height: 1;
+  pointer-events: none;
+  transform: translate(50%, 50%);
+  z-index: var(--cursor-z-index);
+}
+.cursor img {
+  transform: translate(-24%, -10%);
 }

@@ -6,6 +6,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   cursor: none;
+  user-select: none;
 }
 
 code {
@@ -25,7 +26,10 @@ code {
   --button-primary-border-color: #007bff;
   --icon-color: #fff;
   --cursor-color: #000;
-  --cursor-index: 1000;
+  --black-color: #000;
+  --white-color: #fff;
+  --silver-color: #c0c0c0;
+  --cursor-z-index: 1000;
   --cursor-size: 20px;
   --grid-size: 20px;
   --grid-bg-color: #f0f0f0;

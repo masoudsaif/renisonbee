@@ -1,24 +1,30 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+import CursorSVG from "../../../assets/svg/cursor.svg";
 import "./Cursor.css";
-import IPosition from "../../../interfaces/position.interface";
 
-interface CursorProps {
-  position: IPosition;
-}
+const Cursor: React.FC = () => {
+  const cursorRef = useRef<HTMLDivElement | null>(null);
 
-const Cursor: React.FC<CursorProps> = ({ position }) => {
-  const cursorStyle: React.CSSProperties = {
-    top: position.y,
-    left: position.x,
-  };
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      }
+    };
 
-  return (
-    <div className="cursor-container" style={cursorStyle}>
-      <div className="crosshair">
-        <div className="vertical-line"></div>
-        <div className="horizontal-line"></div>
-      </div>
-    </div>
+    document.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
+  return ReactDOM.createPortal(
+    <div ref={cursorRef} className="cursor">
+      <img src={CursorSVG} alt="" />
+    </div>,
+    document.body
   );
 };
 

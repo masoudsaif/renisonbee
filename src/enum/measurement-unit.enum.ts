@@ -1,6 +1,5 @@
 enum MeasurementUnit {
-  METRIC = "metric",
-  IMPERIAL = "imperial",
+  PIXELS = "PIXELS",
 }
 
 export default MeasurementUnit;

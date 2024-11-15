@@ -7,7 +7,7 @@ import DrawToolbar from "./components/components-ui/DrawToolbar/DrawToolbar";
 
 const App: React.FC = () => {
   const [mode, setMode] = useState(PlanEventType.CREATE_LINE);
-  const [unit, setUnit] = useState<MeasurementUnit>(MeasurementUnit.METRIC);
+  const [unit] = useState<MeasurementUnit>(MeasurementUnit.PIXELS);
 
   const handleSelectMode = (mode: PlanEventType) => setMode(mode);
 

@@ -1,8 +1,8 @@
-import React, { HTMLProps } from "react";
+import React, { HTMLProps, memo } from "react";
 import If from "../../components-logical/If/If";
 import { convertToUnit } from "../../../util/units";
 import MeasurementUnit from "../../../enum/measurement-unit.enum";
-import PALETTE from "../../../styles/palette";
+import PALETTE from "../../../styles/palette.styles";
 
 interface CircleProps extends HTMLProps<HTMLOrSVGElement> {
   startX: number;
@@ -20,70 +20,72 @@ interface CircleProps extends HTMLProps<HTMLOrSVGElement> {
   unit: MeasurementUnit;
 }
 
-const Circle: React.FC<CircleProps> = ({
-  startX,
-  startY,
-  endX,
-  endY,
-  unit,
-  strokeColor = PALETTE.BLACK,
-  fillColor = "none",
-  strokeWidth = 1,
-  textColor = PALETTE.BLACK,
-  isSelected = false,
-  isDimensionsVisible = false,
-  isRadiusVisible = isDimensionsVisible,
-  isAreaVisible = isDimensionsVisible,
-}) => {
-  // Calculate radius
-  const radiusInPixels = Math.sqrt(
-    Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
-  );
-  const radius = convertToUnit(unit, radiusInPixels);
+const Circle: React.FC<CircleProps> = memo(
+  ({
+    startX,
+    startY,
+    endX,
+    endY,
+    unit,
+    strokeColor = PALETTE.BLACK,
+    fillColor = "none",
+    strokeWidth = 1,
+    textColor = PALETTE.BLACK,
+    isSelected = false,
+    isDimensionsVisible = false,
+    isRadiusVisible = isDimensionsVisible,
+    isAreaVisible = isDimensionsVisible,
+  }) => {
+    // Calculate radius
+    const radiusInPixels = Math.sqrt(
+      Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+    );
+    const radius = convertToUnit(radiusInPixels, unit);
 
-  // Calculate area
-  const area = Math.PI * Math.pow(radiusInPixels, 2);
-  const convertedArea = convertToUnit(unit, area);
+    // Calculate area
+    const area = Math.PI * Math.pow(radiusInPixels, 2);
+    const convertedArea = convertToUnit(area, unit);
 
-  const offsetX = 10;
-  const offsetY = -10;
+    const offsetX = 10;
+    const offsetY = -10;
 
-  return (
-    <g>
-      <circle
-        cx={startX}
-        cy={startY}
-        r={radiusInPixels}
-        stroke={isSelected ? "blue" : strokeColor}
-        strokeWidth={strokeWidth}
-        fill={fillColor}
-      />
-      <If condition={isRadiusVisible}>
-        <text
-          x={startX + radiusInPixels + offsetX}
-          y={startY + offsetY}
-          textAnchor="middle"
-          alignmentBaseline="middle"
-          fontSize="12"
-          fill={textColor}
-        >
-          R: {radius}
-        </text>
-      </If>
-      <If condition={isAreaVisible}>
-        <text
-          x={startX}
-          y={startY + radiusInPixels + offsetY}
-          textAnchor="middle"
-          alignmentBaseline="middle"
-          fontSize="12"
-          fill={textColor}
-        >
-          Area: {convertedArea}
-        </text>
-      </If>
-    </g>
-  );
-};
+    return (
+      <g>
+        <circle
+          cx={startX}
+          cy={startY}
+          r={radiusInPixels}
+          stroke={isSelected ? "blue" : strokeColor}
+          strokeWidth={strokeWidth}
+          fill={fillColor}
+        />
+        <If condition={isRadiusVisible}>
+          <text
+            x={startX + radiusInPixels + offsetX}
+            y={startY + offsetY}
+            textAnchor="middle"
+            alignmentBaseline="middle"
+            fontSize="12"
+            fill={textColor}
+          >
+            R: {radius}
+          </text>
+        </If>
+        <If condition={isAreaVisible}>
+          <text
+            x={startX}
+            y={startY + radiusInPixels + offsetY}
+            textAnchor="middle"
+            alignmentBaseline="middle"
+            fontSize="12"
+            fill={textColor}
+          >
+            Area: {convertedArea}
+          </text>
+        </If>
+      </g>
+    );
+  }
+);
 
 export default Circle;
