@@ -3,5 +3,5 @@ import IShape from "./shape.interface";
 
 export default interface IEvent {
   type: PlanEventType;
-  data: IShape;
+  data: IShape | IShape[];
 }

@@ -17,6 +17,9 @@ import {
 import IPosition from "../interfaces/position.interface";
 import SnapHighlight from "../components/components-drawing/SnapHightLight/SnapHighLight";
 import ShapeType from "../enum/shape-type.enum";
+import SelectionArea from "../components/components-drawing/SelectionArea/SelectionArea";
+import IShapePosition from "../interfaces/shape-position.interface";
+import { getIsShapeIntersecting } from "../util/intersection";
 
 export interface DrawPanelProps {
   mode: EventType;
@@ -28,7 +31,10 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
   const [shapes, setShapes] = useState<IShape[]>([]);
   const [currentShape, setCurrentShape] = useState<IShape | null>(null);
   const [snapHighlight, setSnapHighlight] = useState<IPosition | null>(null);
-  console.log("rerender");
+  const [selectionArea, setSelectionArea] = useState<IShapePosition | null>(
+    null
+  );
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (isCreateShapeMode(mode)) {
       const startX = snapHighlight?.x || e.nativeEvent.offsetX;
@@ -41,6 +47,10 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
         endY: startY,
         type: mapEventToShape(mode),
       });
+    } else if (mode === EventType.SELECT) {
+      const startX = e.nativeEvent.offsetX;
+      const startY = e.nativeEvent.offsetY;
+      setSelectionArea({ startX, startY, endX: startX, endY: startY });
     }
   };
 
@@ -85,6 +95,10 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
           endY,
         });
       }
+    } else if (mode === EventType.SELECT && selectionArea) {
+      setSelectionArea((prev) =>
+        prev ? { ...prev, endX: cursorX, endY: cursorY } : null
+      );
     }
   };
 
@@ -105,6 +119,28 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
         });
       }
       setCurrentShape(null);
+    } else if (mode === EventType.SELECT && selectionArea) {
+      if (!isAtTheSamePosition(selectionArea)) {
+        const { startX, startY, endX, endY } = selectionArea;
+        const selectionBounds = {
+          minX: Math.min(startX, endX),
+          minY: Math.min(startY, endY),
+          maxX: Math.max(startX, endX),
+          maxY: Math.max(startY, endY),
+        };
+
+        setShapes((prevShapes) => {
+          historyRef.current.push({
+            type: mode,
+            data: prevShapes,
+          });
+          return prevShapes.map((shape) => ({
+            ...shape,
+            isSelected: getIsShapeIntersecting(shape, selectionBounds),
+          }));
+        });
+        setSelectionArea(null);
+      }
     }
   };
 
@@ -115,6 +151,8 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
       const lastEvent = historyRef.current.pop();
       if (lastEvent?.type && isCreateShapeMode(lastEvent?.type)) {
         setShapes((prevShapes) => prevShapes.slice(0, -1));
+      } else if (lastEvent?.type && EventType.SELECT) {
+        setShapes(lastEvent.data as []);
       }
     }
   };
@@ -138,7 +176,6 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
         ...shape,
         key: shape.id,
         unit,
-        isDimensionsVisible: true,
       })
     );
 
@@ -153,6 +190,15 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
     };
   }, []);
 
+  useEffect(() => {
+    setShapes((prevShapes) =>
+      prevShapes.map((shape) => ({ ...shape, isSelected: false }))
+    );
+    historyRef.current = historyRef.current.filter(
+      ({ type }) => type !== EventType.SELECT
+    );
+  }, [mode]);
+  console.log(historyRef.current);
   return (
     <div
       className="grid"
@@ -170,6 +216,7 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
               isDimensionsVisible: true,
             })
           : null}
+        {selectionArea ? <SelectionArea {...selectionArea} /> : null}
         <SnapHighlight {...snapHighlight} />
       </svg>
     </div>

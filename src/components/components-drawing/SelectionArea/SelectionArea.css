@@ -1,0 +1,5 @@
+.selection-rect {
+  fill: var(--select-color);
+  stroke: var(--primary-color);
+  stroke-dasharray: 4;
+}

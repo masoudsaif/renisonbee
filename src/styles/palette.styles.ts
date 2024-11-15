@@ -1,4 +1,5 @@
 const PALETTE = {
+  PRIMARY: "#007bff",
   BLACK: "#000",
   WHITE: "#FFF",
   SILVER: "#c0c0c0",

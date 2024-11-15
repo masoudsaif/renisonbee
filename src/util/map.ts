@@ -5,12 +5,12 @@ import Rectangle from "../components/components-drawing/Rectangle/Rectangle";
 import Circle from "../components/components-drawing/Circle/Circle";
 
 export const mapEventToShape = (type: EventType) => {
-  switch (true) {
-    case type === EventType.CREATE_LINE:
+  switch (type) {
+    case EventType.CREATE_LINE:
       return ShapeType.LINE;
-    case type === EventType.CREATE_RECTANGLE:
+    case EventType.CREATE_RECTANGLE:
       return ShapeType.RECTANGLE;
-    case type === EventType.CREATE_CIRCLE:
+    case EventType.CREATE_CIRCLE:
       return ShapeType.CIRCLE;
     default:
       throw new Error("Invalid event type");
@@ -18,12 +18,12 @@ export const mapEventToShape = (type: EventType) => {
 };
 
 export const mapShapeComponentToShape = (type: ShapeType) => {
-  switch (true) {
-    case type === ShapeType.LINE:
+  switch (type) {
+    case ShapeType.LINE:
       return Line;
-    case type === ShapeType.RECTANGLE:
+    case ShapeType.RECTANGLE:
       return Rectangle;
-    case type === ShapeType.CIRCLE:
+    case ShapeType.CIRCLE:
       return Circle;
     default:
       throw new Error("Invalid shape type");
