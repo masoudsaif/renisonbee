@@ -4,6 +4,7 @@ import PlanEventType from "./enum/event-type.enum";
 import MeasurementUnit from "./enum/measurement-unit.enum";
 import "./App.css";
 import DrawToolbar from "./components/components-ui/DrawToolbar/DrawToolbar";
+import Cursor from "./components/components-ui/Cursor/Cursor";
 
 const App: React.FC = () => {
   const [mode, setMode] = useState(PlanEventType.CREATE_LINE);
@@ -13,6 +14,7 @@ const App: React.FC = () => {
 
   return (
     <div>
+      <Cursor />
       <DrawToolbar selectedMode={mode} onSelectMode={handleSelectMode} />
       <DrawPanel mode={mode} unit={unit} />
     </div>
