@@ -1,10 +1,10 @@
-import React, { HTMLProps, memo } from "react";
-import If from "../../components-logical/If/If";
+import React, { memo } from "react";
 import { convertToUnit } from "../../../util/units";
 import MeasurementUnit from "../../../enum/measurement-unit.enum";
 import PALETTE from "../../../styles/palette.styles";
+import { MOVE_OPCITY } from "../../../constants/settings";
 
-interface LineProps extends HTMLProps<HTMLOrSVGElement> {
+interface LineProps {
   startX: number;
   startY: number;
   endX: number;
@@ -13,11 +13,13 @@ interface LineProps extends HTMLProps<HTMLOrSVGElement> {
   strokeWidth?: number;
   textColor?: string;
   isSelected?: boolean;
+  isMoving?: boolean;
   isLengthVisible?: boolean;
   isAngleVisible?: boolean;
   isDimensionsVisible?: boolean;
   isAngleArcVisible?: boolean;
   angleColor?: string;
+  opacity?: number;
   unit: MeasurementUnit;
 }
 
@@ -29,6 +31,7 @@ const Line: React.FC<LineProps> = memo(
     endY,
     unit,
     isSelected = false,
+    isMoving = false,
     strokeColor = PALETTE.BLACK,
     strokeWidth = 1,
     textColor = PALETTE.BLACK,
@@ -37,6 +40,8 @@ const Line: React.FC<LineProps> = memo(
     isLengthVisible = isDimensionsVisible,
     isAngleVisible = isDimensionsVisible,
     isAngleArcVisible = isDimensionsVisible,
+    opacity = isMoving ? MOVE_OPCITY : 1,
+    ...props
   }) => {
     const lengthInPixels = Math.sqrt(
       Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
@@ -74,8 +79,10 @@ const Line: React.FC<LineProps> = memo(
           y2={endY}
           stroke={isSelected ? "blue" : strokeColor}
           strokeWidth={strokeWidth}
+          opacity={opacity}
+          {...props}
         />
-        <If condition={isLengthVisible}>
+        {isLengthVisible ? (
           <text
             x={midX + offsetX}
             y={midY + offsetY}
@@ -86,8 +93,8 @@ const Line: React.FC<LineProps> = memo(
           >
             {length}
           </text>
-        </If>
-        <If condition={isAngleVisible}>
+        ) : null}
+        {isAngleVisible ? (
           <text
             x={startX + offsetX}
             y={startY + offsetY + 15}
@@ -98,18 +105,28 @@ const Line: React.FC<LineProps> = memo(
           >
             {angleInDegrees.toFixed(2)}°
           </text>
-        </If>
-        <If condition={isAngleArcVisible}>
-          <path d={arcPath} fill="none" stroke={angleColor} strokeWidth="1" />
-          <line
-            x1={startX}
-            y1={startY}
-            x2={startX + arcRadius}
-            y2={startY}
-            stroke={angleColor}
-            strokeWidth={1}
-          />
-        </If>
+        ) : null}
+        {isAngleArcVisible ? (
+          <>
+            <text
+              x={startX + offsetX}
+              y={startY + offsetY + 15}
+              textAnchor="before-edge"
+              alignmentBaseline="before-edge"
+              fontSize="12"
+              fill={textColor}
+            ></text>
+            <path d={arcPath} fill="none" stroke={angleColor} strokeWidth="1" />
+            <line
+              x1={startX}
+              y1={startY}
+              x2={startX + arcRadius}
+              y2={startY}
+              stroke={angleColor}
+              strokeWidth={1}
+            />
+          </>
+        ) : null}
       </g>
     );
   }

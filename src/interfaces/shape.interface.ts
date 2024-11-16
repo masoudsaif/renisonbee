@@ -5,4 +5,5 @@ export default interface IShape extends IShapePosition {
   id: string;
   type: ShapeType;
   isSelected?: boolean;
+  isMoving?: boolean;
 }

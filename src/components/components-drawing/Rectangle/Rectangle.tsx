@@ -1,10 +1,10 @@
-import React, { HTMLProps, memo } from "react";
-import If from "../../components-logical/If/If";
+import React, { memo } from "react";
 import { convertToUnit } from "../../../util/units";
 import MeasurementUnit from "../../../enum/measurement-unit.enum";
 import PALETTE from "../../../styles/palette.styles";
+import { MOVE_OPCITY } from "../../../constants/settings";
 
-interface RectangleProps extends HTMLProps<HTMLOrSVGElement> {
+interface RectangleProps {
   startX: number;
   startY: number;
   endX: number;
@@ -14,7 +14,9 @@ interface RectangleProps extends HTMLProps<HTMLOrSVGElement> {
   fillColor?: string;
   textColor?: string;
   isSelected?: boolean;
+  isMoving?: boolean;
   isDimensionsVisible?: boolean;
+  opacity?: number;
   unit: MeasurementUnit;
 }
 
@@ -30,7 +32,10 @@ const Rectangle: React.FC<RectangleProps> = memo(
     fillColor = "none",
     textColor = PALETTE.BLACK,
     isSelected = false,
+    isMoving = false,
     isDimensionsVisible = false,
+    opacity = isMoving ? MOVE_OPCITY : 1,
+    ...props
   }) => {
     const x = Math.min(startX, endX);
     const y = Math.min(startY, endY);
@@ -56,29 +61,33 @@ const Rectangle: React.FC<RectangleProps> = memo(
           stroke={isSelected ? "blue" : strokeColor}
           strokeWidth={strokeWidth}
           fill={fillColor}
+          opacity={opacity}
+          {...props}
         />
-        <If condition={isDimensionsVisible}>
-          <text
-            x={midX}
-            y={y + offsetY}
-            textAnchor="middle"
-            alignmentBaseline="after-edge"
-            fontSize="12"
-            fill={textColor}
-          >
-            W: {widthInUnit}
-          </text>
-          <text
-            x={x + offsetX}
-            y={midY}
-            textAnchor="before-edge"
-            alignmentBaseline="middle"
-            fontSize="12"
-            fill={textColor}
-          >
-            H: {heightInUnit}
-          </text>
-        </If>
+        {isDimensionsVisible ? (
+          <>
+            <text
+              x={midX}
+              y={y + offsetY}
+              textAnchor="middle"
+              alignmentBaseline="after-edge"
+              fontSize="12"
+              fill={textColor}
+            >
+              W: {widthInUnit}
+            </text>
+            <text
+              x={x + offsetX}
+              y={midY}
+              textAnchor="before-edge"
+              alignmentBaseline="middle"
+              fontSize="12"
+              fill={textColor}
+            >
+              H: {heightInUnit}
+            </text>
+          </>
+        ) : null}
       </g>
     );
   }

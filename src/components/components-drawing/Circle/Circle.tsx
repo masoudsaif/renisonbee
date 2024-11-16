@@ -1,10 +1,10 @@
-import React, { HTMLProps, memo } from "react";
-import If from "../../components-logical/If/If";
+import React, { memo } from "react";
 import { convertToUnit } from "../../../util/units";
 import MeasurementUnit from "../../../enum/measurement-unit.enum";
 import PALETTE from "../../../styles/palette.styles";
+import { MOVE_OPCITY } from "../../../constants/settings";
 
-interface CircleProps extends HTMLProps<HTMLOrSVGElement> {
+interface CircleProps {
   startX: number;
   startY: number;
   endX: number;
@@ -14,9 +14,11 @@ interface CircleProps extends HTMLProps<HTMLOrSVGElement> {
   strokeWidth?: number;
   textColor?: string;
   isSelected?: boolean;
+  isMoving?: boolean;
   isRadiusVisible?: boolean;
   isAreaVisible?: boolean;
   isDimensionsVisible?: boolean;
+  opacity?: number;
   unit: MeasurementUnit;
 }
 
@@ -32,9 +34,12 @@ const Circle: React.FC<CircleProps> = memo(
     strokeWidth = 1,
     textColor = PALETTE.BLACK,
     isSelected = false,
+    isMoving = false,
     isDimensionsVisible = false,
     isRadiusVisible = isDimensionsVisible,
     isAreaVisible = isDimensionsVisible,
+    opacity = isMoving ? MOVE_OPCITY : 1,
+    ...props
   }) => {
     // Calculate radius
     const radiusInPixels = Math.sqrt(
@@ -58,8 +63,10 @@ const Circle: React.FC<CircleProps> = memo(
           stroke={isSelected ? "blue" : strokeColor}
           strokeWidth={strokeWidth}
           fill={fillColor}
+          opacity={opacity}
+          {...props}
         />
-        <If condition={isRadiusVisible}>
+        {isRadiusVisible ? (
           <text
             x={startX + radiusInPixels + offsetX}
             y={startY + offsetY}
@@ -70,8 +77,8 @@ const Circle: React.FC<CircleProps> = memo(
           >
             R: {radius}
           </text>
-        </If>
-        <If condition={isAreaVisible}>
+        ) : null}
+        {isAreaVisible ? (
           <text
             x={startX}
             y={startY + radiusInPixels + offsetY}
@@ -82,7 +89,7 @@ const Circle: React.FC<CircleProps> = memo(
           >
             Area: {convertedArea}
           </text>
-        </If>
+        ) : null}
       </g>
     );
   }

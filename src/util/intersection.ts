@@ -76,10 +76,45 @@ export const isRectangleIntersectingWithSelection = (
   return isFullyCovered || isIntersecting;
 };
 
+export const doesLineIntersectCircle = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  cx: number,
+  cy: number,
+  radius: number
+): boolean => {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  const fx = x1 - cx;
+  const fy = y1 - cy;
+
+  const a = dx * dx + dy * dy;
+  const b = 2 * (fx * dx + fy * dy);
+  const c = fx * fx + fy * fy - radius * radius;
+
+  const discriminant = b * b - 4 * a * c;
+
+  if (discriminant < 0) {
+    // No intersection
+    return false;
+  }
+
+  // Find the points of intersection using the quadratic formula
+  const discriminantSqrt = Math.sqrt(discriminant);
+  const t1 = (-b - discriminantSqrt) / (2 * a);
+  const t2 = (-b + discriminantSqrt) / (2 * a);
+
+  // Check if either t1 or t2 is within the segment bounds
+  return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+};
+
 export const isCircleIntersectingWithSelection = (
   shape: IShape,
   selectionBounds: ISelectionBounds
-) => {
+): boolean => {
   const { startX: cx, startY: cy } = shape;
   const radius = Math.hypot(
     shape.endX - shape.startX,
@@ -99,27 +134,48 @@ export const isCircleIntersectingWithSelection = (
     selectionBounds.maxX >= circleMaxX &&
     selectionBounds.maxY >= circleMaxY;
 
-  // Case 2: Check if the selection box intersects the circumference of the circle
-  // Find the closest point on the selection box to the circle's center
-  const closestX = Math.max(
-    selectionBounds.minX,
-    Math.min(cx, selectionBounds.maxX)
+  if (isFullyCovered) {
+    return true;
+  }
+
+  // Case 2: Check if any side of the selection box intersects the circle's circumference
+  const boxEdges = [
+    // Top edge
+    {
+      x1: selectionBounds.minX,
+      y1: selectionBounds.minY,
+      x2: selectionBounds.maxX,
+      y2: selectionBounds.minY,
+    },
+    // Right edge
+    {
+      x1: selectionBounds.maxX,
+      y1: selectionBounds.minY,
+      x2: selectionBounds.maxX,
+      y2: selectionBounds.maxY,
+    },
+    // Bottom edge
+    {
+      x1: selectionBounds.maxX,
+      y1: selectionBounds.maxY,
+      x2: selectionBounds.minX,
+      y2: selectionBounds.maxY,
+    },
+    // Left edge
+    {
+      x1: selectionBounds.minX,
+      y1: selectionBounds.maxY,
+      x2: selectionBounds.minX,
+      y2: selectionBounds.minY,
+    },
+  ];
+
+  const isIntersectingWithEdges = boxEdges.some(({ x1, y1, x2, y2 }) =>
+    doesLineIntersectCircle(x1, y1, x2, y2, cx, cy, radius)
   );
-  const closestY = Math.max(
-    selectionBounds.minY,
-    Math.min(cy, selectionBounds.maxY)
-  );
 
-  // Calculate the distance from the center of the circle to the closest point
-  const distanceX = closestX - cx;
-  const distanceY = closestY - cy;
-  const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-
-  // Case 3: Intersection with the circumference
-  const isIntersecting = distance <= radius;
-
-  // Only return true if the selection box fully covers the circle or intersects its circumference
-  return isFullyCovered || isIntersecting;
+  // Return true only if the circle is fully covered or intersects with the box edges or circumference
+  return isIntersectingWithEdges;
 };
 
 export const isLineIntersectingWithSelection = (

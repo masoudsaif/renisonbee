@@ -16,21 +16,26 @@ export const isAtTheSamePosition = (shape: IShape) =>
   shape.startX === shape.endX && shape.startY === shape.endY;
 
 export const getNearestShapeSnapPoint = (
+  shapes: IShape[],
   cursorPosition: IPosition,
-  shapes: IShape[]
+  threshold = SNAP_THRESHOLD
 ): IPosition | null => {
   for (const shape of shapes) {
     let nearestPoint: IPosition | null = null;
 
     switch (shape.type) {
       case ShapeType.LINE:
-        nearestPoint = getNearestLinePoint(shape, cursorPosition);
+        nearestPoint = getNearestLinePoint(shape, cursorPosition, threshold);
         break;
       case ShapeType.RECTANGLE:
-        nearestPoint = getNearestRectanglePoint(shape, cursorPosition);
+        nearestPoint = getNearestRectanglePoint(
+          shape,
+          cursorPosition,
+          threshold
+        );
         break;
       case ShapeType.CIRCLE:
-        nearestPoint = getNearestCirclePoint(shape, cursorPosition);
+        nearestPoint = getNearestCirclePoint(shape, cursorPosition, threshold);
         break;
       default:
         continue;
@@ -68,16 +73,17 @@ export const calculateLineSnapPoints = ({
 
 export const getNearestLinePoint = (
   line: IShapePosition,
-  cursorPosition: IPosition
+  cursorPosition: IPosition,
+  threshold = SNAP_THRESHOLD
 ) => {
   const points = calculateLineSnapPoints(line);
-  const nearestPoint = getNearestPoint(points, cursorPosition);
+  const nearestPoint = getNearestPoint(points, cursorPosition, threshold);
 
   if (nearestPoint) {
     return nearestPoint;
   }
 
-  return getNearestLinePathPoint(line, cursorPosition);
+  return getNearestLinePathPoint(line, cursorPosition, threshold);
 };
 
 export const getNearestLineSnapAnglePoint = (
@@ -150,16 +156,17 @@ export const calculateRectangleSnapPoints = ({
 
 export const getNearestRectanglePoint = (
   rectangle: IShape,
-  cursorPosition: IPosition
+  cursorPosition: IPosition,
+  threshold = SNAP_THRESHOLD
 ) => {
   const points = calculateRectangleSnapPoints(rectangle);
-  const nearestPoint = getNearestPoint(points, cursorPosition);
+  const nearestPoint = getNearestPoint(points, cursorPosition, threshold);
 
   if (nearestPoint) {
     return nearestPoint;
   }
 
-  return getNearestRectangleSidesPoint(rectangle, cursorPosition);
+  return getNearestRectangleSidesPoint(rectangle, cursorPosition, threshold);
 };
 
 export const calculateCircleProperties = ({
@@ -215,7 +222,7 @@ export const getNearestCirclePoint = (
 ) => {
   const circleProps = calculateCircleProperties(circle);
   const points = calculateCircleSnapPoints(circleProps);
-  const nearestPoint = getNearestPoint(points, cursorPosition);
+  const nearestPoint = getNearestPoint(points, cursorPosition, threshold);
 
   if (nearestPoint) {
     return nearestPoint;
@@ -279,7 +286,8 @@ export const calculateRectangleSides = ({
 
 export const getNearestRectangleSidesPoint = (
   rectangle: IShape,
-  cursorPosition: IPosition
+  cursorPosition: IPosition,
+  threshold = SNAP_THRESHOLD
 ): IPosition | null => {
   const sides = calculateRectangleSides(rectangle);
 
@@ -289,7 +297,8 @@ export const getNearestRectangleSidesPoint = (
   for (const { x1, y1, x2, y2 } of sides) {
     const point = getNearestLinePathPoint(
       { startX: x1, startY: y1, endX: x2, endY: y2 },
-      cursorPosition
+      cursorPosition,
+      threshold
     );
 
     if (point) {

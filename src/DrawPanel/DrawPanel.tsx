@@ -19,6 +19,8 @@ import ShapeType from "../enum/shape-type.enum";
 import SelectionArea from "../components/components-drawing/SelectionArea/SelectionArea";
 import IShapePosition from "../interfaces/shape-position.interface";
 import { getIsShapeIntersecting } from "../util/intersection";
+import { shallowCopyArray } from "../util/copy";
+import { getMovingShapes } from "../util/move";
 
 export interface DrawPanelProps {
   mode: EventType;
@@ -29,6 +31,7 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
   const historyRef = useRef<IEvent[]>([]);
   const isMouseDownRef = useRef(false);
   const cursorPositionRef = useRef<IPosition>({ x: 0, y: 0 });
+  const movingReferencePointRef = useRef<IPosition | null>(null);
   const copiedShapesRef = useRef<IShape[] | null>(null);
   const [shapes, setShapes] = useState<IShape[]>([]);
   const [currentShape, setCurrentShape] = useState<IShape | null>(null);
@@ -36,98 +39,159 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
   const [selectionArea, setSelectionArea] = useState<IShapePosition | null>(
     null
   );
+  const [movingShapes, setMovingShapes] = useState<IShape[]>([]);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    isMouseDownRef.current = true;
-    if (isCreateShapeMode(mode)) {
-      const startX = snapHighlight?.x || e.nativeEvent.offsetX;
-      const startY = snapHighlight?.y || e.nativeEvent.offsetY;
-      setCurrentShape({
-        id: generateId(),
-        startX,
-        startY,
-        endX: startX,
-        endY: startY,
-        type: mapEventToShape(mode),
-      });
-    } else if (mode === EventType.SELECT) {
-      const startX = e.nativeEvent.offsetX;
-      const startY = e.nativeEvent.offsetY;
-      setSelectionArea({ startX, startY, endX: startX, endY: startY });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    const cursorX = e.nativeEvent.offsetX;
-    const cursorY = e.nativeEvent.offsetY;
-    const cursorPosition = { x: cursorX, y: cursorY };
-    const endX = snapHighlight?.x || cursorX;
-    const endY = snapHighlight?.y || cursorY;
-    cursorPositionRef.current = cursorPosition;
-
-    const nearestShapeSnapPoint = getNearestShapeSnapPoint(
-      cursorPosition,
-      shapes
-    );
-
-    if (nearestShapeSnapPoint) {
-      setSnapHighlight(nearestShapeSnapPoint);
-    } else {
-      const nearestGridSnapPoint = getNearestGridPoint(cursorPosition);
-      if (nearestGridSnapPoint) {
-        setSnapHighlight(nearestGridSnapPoint);
-      } else {
-        setSnapHighlight(null);
-      }
-    }
-
-    if (isCreateShapeMode(mode) && currentShape) {
-      if (currentShape.type === ShapeType.LINE) {
-        const point = getNearestLineSnapAnglePoint(
-          currentShape,
-          cursorPosition
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      isMouseDownRef.current = true;
+      const { offsetX: x, offsetY: y } = e.nativeEvent;
+      if (isCreateShapeMode(mode)) {
+        const startX = snapHighlight?.x || x;
+        const startY = snapHighlight?.y || y;
+        setCurrentShape({
+          id: generateId(),
+          startX,
+          startY,
+          endX: startX,
+          endY: startY,
+          type: mapEventToShape(mode),
+        });
+      } else if (mode === EventType.SELECT) {
+        const movingState = getMovingShapes(
+          shapes
+            .filter(({ isSelected }) => isSelected)
+            .map((shape) => ({ ...shape, isSelected: false })),
+          { x, y }
         );
-        setCurrentShape({
-          ...currentShape,
-          endX: point?.x || endX,
-          endY: point?.y || endY,
-        });
-      } else {
-        setCurrentShape({
-          ...currentShape,
-          endX,
-          endY,
-        });
+        if (shapes.some(({ isSelected }) => isSelected) && movingState) {
+          const nextMovingShapes = movingState;
+          if (nextMovingShapes) {
+            movingReferencePointRef.current = snapHighlight;
+            setMovingShapes(nextMovingShapes);
+            return;
+          }
+        }
+        setSelectionArea({ startX: x, startY: y, endX: x, endY: y });
       }
-    } else if (
-      mode === EventType.SELECT &&
-      selectionArea &&
-      isMouseDownRef.current
-    ) {
-      setSelectionArea((prev) =>
-        prev ? { ...prev, endX: cursorX, endY: cursorY } : null
-      );
-    }
-  };
+    },
+    [shapes, mode, snapHighlight]
+  );
 
-  const handleMouseUp = () => {
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      const cursorX = e.nativeEvent.offsetX;
+      const cursorY = e.nativeEvent.offsetY;
+      const cursorPosition = { x: cursorX, y: cursorY };
+      const endX = snapHighlight?.x || cursorX;
+      const endY = snapHighlight?.y || cursorY;
+      cursorPositionRef.current = cursorPosition;
+
+      const nearestShapeSnapPoint = getNearestShapeSnapPoint(
+        shapes,
+        cursorPosition
+      );
+
+      if (nearestShapeSnapPoint) {
+        setSnapHighlight(nearestShapeSnapPoint);
+      } else {
+        const nearestGridSnapPoint = getNearestGridPoint(cursorPosition);
+        if (nearestGridSnapPoint) {
+          setSnapHighlight(nearestGridSnapPoint);
+        } else {
+          setSnapHighlight(null);
+        }
+      }
+
+      if (isCreateShapeMode(mode) && currentShape) {
+        if (currentShape.type === ShapeType.LINE) {
+          const point = getNearestLineSnapAnglePoint(
+            currentShape,
+            cursorPosition
+          );
+          setCurrentShape({
+            ...currentShape,
+            endX: point?.x || endX,
+            endY: point?.y || endY,
+          });
+        } else {
+          setCurrentShape({
+            ...currentShape,
+            endX,
+            endY,
+          });
+        }
+      } else if (
+        mode === EventType.SELECT &&
+        movingReferencePointRef.current &&
+        movingShapes.length
+      ) {
+        const {
+          current: { x: refX, y: refY },
+        } = movingReferencePointRef;
+        const offsetX = endX - refX;
+        const offsetY = endY - refY;
+
+        movingReferencePointRef.current = {
+          x: refX + offsetX,
+          y: refY + offsetY,
+        };
+
+        setMovingShapes((prevShapes) =>
+          prevShapes.map((shape) => ({
+            ...shape,
+            startX: shape.startX + offsetX,
+            startY: shape.startY + offsetY,
+            endX: shape.endX + offsetX,
+            endY: shape.endY + offsetY,
+          }))
+        );
+      } else if (
+        mode === EventType.SELECT &&
+        selectionArea &&
+        isMouseDownRef.current
+      ) {
+        setSelectionArea((prev) =>
+          prev ? { ...prev, endX: cursorX, endY: cursorY } : null
+        );
+      }
+    },
+    [shapes, movingShapes, selectionArea, snapHighlight, currentShape, mode]
+  );
+
+  const handleMouseUp = useCallback(() => {
     isMouseDownRef.current = false;
     if (isCreateShapeMode(mode) && currentShape) {
       if (!isAtTheSamePosition(currentShape)) {
-        setShapes((prevShapes) => [
-          ...prevShapes,
-          {
-            ...currentShape,
-            endX: snapHighlight?.x || currentShape.endX,
-            endY: snapHighlight?.y || currentShape.endY,
-          },
-        ]);
         historyRef.current.push({
           type: mode,
-          data: currentShape,
+          prevData: shallowCopyArray(shapes),
+        });
+        setShapes((prevShapes) => {
+          return [
+            ...prevShapes,
+            {
+              ...currentShape,
+              endX: snapHighlight?.x || currentShape.endX,
+              endY: snapHighlight?.y || currentShape.endY,
+            },
+          ];
         });
       }
       setCurrentShape(null);
+    } else if (mode === EventType.SELECT && movingReferencePointRef.current) {
+      resetMovingShapes();
+      historyRef.current.push({
+        type: mode,
+        prevData: shallowCopyArray(shapes),
+      });
+      setShapes((prevShapes) =>
+        prevShapes.map((shape) => {
+          const updatedShape =
+            movingShapes.find(({ id }) => id === shape.id) || shape;
+
+          return { ...updatedShape, isMoving: false };
+        })
+      );
     } else if (mode === EventType.SELECT && selectionArea) {
       if (!isAtTheSamePosition(selectionArea)) {
         const { startX, startY, endX, endY } = selectionArea;
@@ -147,26 +211,27 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
         setSelectionArea(null);
       }
     }
-  };
+  }, [shapes, selectionArea, currentShape, snapHighlight, movingShapes, mode]);
 
   const handleUndo = (e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-      if (historyRef.current.length === 0) return;
-      const lastEvent = historyRef.current.pop();
-      if (lastEvent?.type && isCreateShapeMode(lastEvent?.type)) {
-        setShapes((prevShapes) => prevShapes.slice(0, -1));
-      } else if (lastEvent?.type === EventType.PASTE) {
-        const data = lastEvent.data as [];
-        setShapes((prevShapes) => prevShapes.slice(0, -data.length));
+      if (historyRef.current.length === 0) {
+        return;
       }
+      const lastEvent = historyRef.current.pop();
+      setShapes(lastEvent!.prevData);
     }
   };
 
   const handleDelete = (e: KeyboardEvent) => {
     if (e.key === "Delete" || e.key === "Backspace") {
-      setShapes((prevShapes) =>
-        prevShapes.filter((shape) => !shape.isSelected)
-      );
+      setShapes((prevShapes) => {
+        historyRef.current.push({
+          type: EventType.PASTE,
+          prevData: shallowCopyArray(prevShapes),
+        });
+        return prevShapes.filter((shape) => !shape.isSelected);
+      });
     }
   };
 
@@ -175,9 +240,15 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
       prevShapes.map((shape) => ({ ...shape, isSelected: false }))
     );
 
+  const resetMovingShapes = () => {
+    setMovingShapes([]);
+    movingReferencePointRef.current = null;
+  };
+
   const handleEscape = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
       resetShapeSelection();
+      resetMovingShapes();
     }
   };
 
@@ -214,15 +285,17 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
             isSelected: true,
           }));
           resetShapeSelection();
-          setShapes((prevShapes) => [...prevShapes, ...newShapes]);
           historyRef.current.push({
             type: EventType.PASTE,
-            data: newShapes,
+            prevData: shallowCopyArray(shapes),
+          });
+          setShapes((prevShapes) => {
+            return [...prevShapes, ...newShapes];
           });
         }
       }
     },
-    [snapHighlight]
+    [shapes, snapHighlight]
   );
 
   const renderShapes = () =>
@@ -231,6 +304,16 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
         ...shape,
         key: shape.id,
         unit,
+      })
+    );
+
+  const renderMovingShapes = () =>
+    movingShapes.map((shape) =>
+      React.createElement(mapShapeComponentToShape(shape.type), {
+        ...shape,
+        key: `${shape.id}-is-moving`,
+        unit,
+        isMoving: true,
       })
     );
 
@@ -273,6 +356,7 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
     >
       <svg className="draw-layer">
         {renderShapes()}
+        {renderMovingShapes()}
         {currentShape
           ? React.createElement(mapShapeComponentToShape(currentShape.type), {
               ...currentShape!,
@@ -281,7 +365,7 @@ const DrawPanel: React.FC<DrawPanelProps> = ({ mode, unit }) => {
             })
           : null}
         {selectionArea ? <SelectionArea {...selectionArea} /> : null}
-        <SnapHighlight {...snapHighlight} />
+        {snapHighlight ? <SnapHighlight {...snapHighlight} /> : null}
       </svg>
     </div>
   );

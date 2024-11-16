@@ -5,6 +5,7 @@ enum EventType {
   CREATE_CIRCLE = "CREATE_CIRCLE",
   SELECT = "SELECT",
   PASTE = "PASTE",
+  DELETE = "DELETE",
 }
 
 export default EventType;
